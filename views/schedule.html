@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="friends-page">
+<header>
+<div class="navbar">
+    <h1>mySchedule</h1>
+    <a href="/main">Home</a>
+    <a href="/friends">Friends</a>
+    <a class="active" href="/schedule">Schedule</a>
+    <a href="/login" class="signin-btn" id="authButton">Sign In</a>
+</div>
+</header>
+
+<h1>Create Event</h1>
+
+<form id="eventForm">
+    <input type="text" id="title" placeholder="Title" required>
+    <input type="datetime-local" id="start" required>
+    <input type="datetime-local" id="end" required>
+    <select id="visibility">
+        <option value="private">Private</option>
+        <option value="friends">Friends</option>
+    </select>
+    <button type="submit">Create</button>
+</form>
+
+<script src="js/schedule.js"></script>
+
+</body>
+</html>

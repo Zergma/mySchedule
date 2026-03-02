@@ -1,0 +1,256 @@
+/* Reset default spacing and make box-sizing predictable */
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+}
+
+/* Make every element use border-box so padding doesn't add to width */
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+/* Navbar */
+.navbar {
+    position: fixed;
+    width: 100%;
+    /* keep it above the parallax */
+    z-index: 10;
+    /*background-color: #e9e9e9;*/
+    background-color: #212121;
+    display: flex;
+    align-items: center;
+}
+
+.friends-page .navbar {
+    position: relative;
+}
+
+.navbar h1 {
+    float: left;
+    color: white;
+    position: relative;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    font-size: 1.8vw;
+    margin: 0;
+    margin-right: 5%;
+}
+
+.navbar a {
+    float: left;
+    display: block;
+    color: white;
+    position: relative;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    font-size: 1.8vw;
+}
+
+.navbar a:hover {
+    background-color: #ddd;
+    color: black;
+}
+
+.navbar a.active {
+    background-color: #04AA6D;
+    color: white;
+}
+
+.navbar a.active:hover {
+    background-color: #027b4f;
+    color: white;
+}
+
+.navbar a:active {
+    content: "";
+    display: block;
+    transform: rotate(5deg);
+    transform: rotate(-5deg);
+    opacity: 0;
+    transition: 1s ease;
+}
+
+.navbar input[type=text] {
+    width: 40%;
+    float: right;
+    padding: 6px;
+    margin-left: auto;
+    margin-right: 1%;
+    border-radius: 8px;
+    border: none;
+    font-size: 1.3vw;
+}
+
+.navbar .signin-btn {
+    background-color: #04AA6D;
+    color: white;
+    border-radius: 8px;
+    padding: 10px 20px;
+    margin-right: 1%;
+    font-size: 1.3vw;
+    margin-left: auto;
+}
+
+.parallax {
+    /* The image used */
+    background-image: url("/images/fox.png");
+
+    min-height: 600px;
+    width: 100%;
+
+    /* Create the parallax scrolling effect */
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.parallax .overlay {
+    position: absolute;
+    margin-top: 10%;
+    padding: 1%;
+    margin-left: 5%;
+    border-color: black;
+    border-width: 50px;
+    border-radius: 8px;
+    width: 25%;
+    color: rgb(223, 223, 223);
+    background-color: rgba(28, 25, 25, 0.7);
+}
+
+
+.parallax .overlay .pinned-friends {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.parallax .overlay .friend {
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 50%;
+    background-color: black;
+}
+
+.parallax .overlay .name {
+    background-color: gray;
+}
+.parallax .overlay .status {
+    height: 13px;
+    width: 13px;
+    background-color: gray;
+    border: 0.1vw solid black;
+}
+
+.parallax .overlay .available .status {
+    background-color: green;
+}
+
+.parallax .overlay .busy .status {
+    background-color: red;
+}
+
+/* ---------------------
+    Friends page 
+--------------------- */
+
+.friends-layout {
+    width: 100%;
+    display: flex;
+    height: calc(100vh-60vh);
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #2b2d31;
+    border-style: solid;
+    border-color: rgb(79, 79, 79);
+    border-width: 1px;
+    color: white;
+    padding: 15px;
+}
+
+.sidebar button {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.sidebar h4 {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #aaa;
+}
+
+.dm-section div {
+    padding: 8px;
+    cursor: pointer;
+    background-color: white;
+}
+
+.dm-section div:hover {
+    background-color: #3a3c42;
+}
+
+.content {
+    flex: 1;
+    background-color: #313338;
+    border-style: solid;
+    border-color: rgb(79, 79, 79);
+    border-width: 1px;
+    display: flex;
+    flex-direction: column;
+}
+
+.friends-tabs {
+    display: flex;
+    padding: 15px;
+    background-color: #1e1f22;
+    gap: 15px;
+}
+
+.friends-tabs button {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.friends-tabs button:hover {
+    color: #04AA6D;
+}
+
+.friends-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* ---------------------
+    Footer
+--------------------- */
+
+.footer {
+    color: rgb(85, 85, 85);
+    display: flex;
+    align-items: center;
+}
+
+.footer .socials {
+    margin-left: 1%;
+}
+
+.contact-link {
+    color: blue;
+    text-decoration: none;
+    font-size: 12px;
+    width: 10%;
+    margin-left: auto;
+}
