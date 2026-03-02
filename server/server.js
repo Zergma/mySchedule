@@ -12,10 +12,11 @@ const PORT = process.env.PORT || 3000;
 
 // --- Database Connection ---
 const db = mysql.createConnection({
-    host: "localhost",
-    user: "website_user",
-    password: "StrongPassword123!",
-    database: "myschedule"
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+    port: process.env.DB_PORT
 });
 
 db.connect(err => {
@@ -31,7 +32,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({ // server can remember users
-    secret: "myschedule_secret_key",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false, httpOnly: true, sameSite: "lax" } // set to true if using HTTPS
