@@ -4,7 +4,7 @@ const friends = [
 ];
 
 function updateFriendsList(isBusy) {
-    const friendsContainer = document.getElementById("pinned-friends");
+    const friendsContainer = document.getElementById("pinnedFriends");
     friendsContainer.innerHTML = ""; // clear current content
 
     friends.forEach(f => {
@@ -27,6 +27,54 @@ function updateFriendsList(isBusy) {
 // Call once to populate list
 updateFriendsList();
 
+function renderFriends(friends) {
+    const pinnedContainer = document.getElementById("pinnedFriends");
+    const allContainer = document.getElementById("allFriends");
+
+    pinnedContainer.innerHTML = "";
+    allContainer.innerHTML = "";
+
+    friends.forEach(friend => {
+        const friendDiv = document.createElement("div");
+        friendDiv.classList.add("friend");
+
+        const name = document.createElement("span");
+        name.classList.add("name");
+        name.textContent = friend.username;
+
+        const status = document.createElement("span");
+        status.classList.add("status");
+
+        if (friend.available) {
+            friendDiv.classList.add("available");
+        } else {
+            friendDiv.classList.add("busy");
+        }
+
+        friendDiv.appendChild(name);
+        friendDiv.appendChild(status);
+
+        if (friend.pinned) {
+            pinnedContainer.appendChild(friendDiv);
+        } else {
+            allContainer.appendChild(friendDiv);
+        }
+    });
+
+    friends.sort((a, b) => {
+        return isAvailable(b) - isAvailable(a);
+    });
+}
+
+// Helper functions
+
+async function loadFriends() {
+    const res = await fetch("/api/friends-with-events");
+    const friends = await res.json();
+
+    renderFriends(friends);
+}
+
 // Check session to see if user is logged in
 async function checkSession() {
     const response = await fetch("/session");
@@ -42,6 +90,7 @@ async function checkSession() {
         const welcome = document.createElement("span");
         welcome.textContent = `Welcome, ${data.username}`;
         welcome.style.marginRight = "15px";
+        welcome.style.color = "white";
 
         authButton.parentNode.insertBefore(welcome, authButton);
     } else {
@@ -51,3 +100,5 @@ async function checkSession() {
 }
 
 checkSession();
+loadFriends();
+setInterval(loadFriends, 60000); // every minute
