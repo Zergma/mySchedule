@@ -12,11 +12,10 @@ const PORT = process.env.PORT || 3000;
 
 // --- Database Connection ---
 const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-    port: process.env.DB_PORT
+    host: "localhost",
+    user: "website_user",
+    password: "StrongPassword123!",
+    database: "myschedule"
 });
 
 db.connect(err => {
@@ -32,7 +31,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({ // server can remember users
-    secret: process.env.SESSION_SECRET,
+    secret: "myschedule_secret_key",
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false, httpOnly: true, sameSite: "lax" } // set to true if using HTTPS
@@ -41,15 +40,18 @@ app.use(session({ // server can remember users
 app.use(express.static(path.join(__dirname, "../public"))); // serves your html/css/js files
 
 // --- Routes ---
-function requireAuth(req, res, next) {
+
+function requireAuthPage(req, res, next) {
+    // If it's a page request, redirect to login
     if (!req.session.userId) {
+        return res.redirect("/login.html");
+    }
 
-        // If it's a page request, redirect to login
-        if (req.headers.accept.includes("text/html")) {
-            return res.redirect("/login.html");
-        }
-
-        // Otherwise it's an API request
+    next();
+}
+function requireAuthAPI(req, res, next) {
+    // Otherwise it's an API request
+    if (!req.session.userId) {
         return res.status(401).json({ 
             success: false, 
             message: "Unauthorized" 
@@ -61,9 +63,11 @@ function requireAuth(req, res, next) {
 
 const eventRoutes = require("./routes/events");
 const friendRoutes = require("./routes/friends");
+const messageRoutes = require("./routes/messages");
 
 app.use("/api/events", eventRoutes(db));
 app.use("/api/friends", friendRoutes(db));
+app.use("/api/messages", messageRoutes(db));
 
 // ---Authentication Routes ---
 app.post("/login", (req, res) => { // Login
@@ -121,24 +125,60 @@ app.get("/session", (req, res) => { // Session check (used by main.js)
     }
 });
 
+app.get("/api/friends-with-events", async (req, res) => {
+    const userId = req.session.userId;
+
+    try { // 1. Get all friends
+        const [friends] = await db.promise().query(`
+            SELECT
+                f.id AS friendship_id, f.pinned,
+                u.id AS user_id, u.username,
+
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1 FROM events e
+                        WHERE e.user_id = u.id
+                        AND NOW() BETWEEN e.start_time AND e.end_time
+                    )
+                    THEN FALSE
+                    ELSE TRUE
+                END as available
+
+            FROM friendships f
+            JOIN users u
+                ON u.id = IF(f.requester_id = ?, f.addressee_id, f.requester_id)
+                
+            WHERE
+                (f.requester_id = ? OR f.addressee_id= ?)
+                AND f.status = 'accepted'
+        `, [userId, userId, userId]);
+        
+        res.json(friends);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Server error");
+    }
+});
+
 // --- Serve HTML views ---
-app.get("/main", requireAuth, (req, res) => {
+app.get("/main", requireAuthPage, (req, res) => {
     res.sendFile(path.join(__dirname, "../views/main.html")); // change to your main page
 });
 
-app.get("/friends", requireAuth, (req, res) => {
+app.get("/friends", requireAuthPage, (req, res) => {
     res.sendFile(path.join(__dirname, "../views/friends.html")); // change to your friends page
 })
 
-app.get("/schedule", requireAuth, (req, res) => {
+app.get("/schedule", requireAuthPage, (req, res) => {
     res.sendFile(path.join(__dirname, "../views/schedule.html")); // change to your schedule page
 })
 
-app.get("/contact", requireAuth, (req, res) => {
+app.get("/contact", requireAuthPage, (req, res) => {
     res.sendFile(path.join(__dirname, "../views/contact.html")); // change to your contact page
 });
 
-app.post("/create-event", requireAuth, (req, res) => {
+app.post("/create-event", requireAuthAPI, (req, res) => {
     // Only logged in users can create events
 });
 
