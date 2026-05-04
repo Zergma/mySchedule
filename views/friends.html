@@ -18,7 +18,7 @@
     <!-- LEFT SIDEBAR -->
     <div class="sidebar">
         <div class="sidebar-top">
-            <button class="friends-btn active" onclick="selectTab('all')">Friends</button>
+            <button class="friends-btn active" onclick="goToFriends()">Friends</button>
         </div>
 
         <div class="dm-section">
@@ -30,21 +30,33 @@
     <!-- RIGHT CONTENT AREA -->
     <div class="content">
         <!-- TOP TABS -->
-        <div class="friends-tabs">
-            <button onclick="selectTab('online')">Online</button>
-            <button onclick="selectTab('all')">All</button>
-            <button onclick="selectTab('pending')">Pending</button>
-            <button onclick="selectTab('add')">Add Friend</button>
+        <div id="friendsTabs" class="friends-tabs">
+            <button class="tab-btn" data-tab="online" onclick="selectTab('online')">Online</button>
+            <button class="tab-btn" data-tab="all" onclick="selectTab('all')">All</button>
+            <button class="tab-btn" data-tab="pending" onclick="selectTab('pending')">Pending</button>
+            <button class="tab-btn" data-tab="add" onclick="selectTab('add')">Add Friend</button>
 
         </div>
-        <h1>Find Friends</h1>
 
         <!-- MAIN PANEL -->
-        <input type="text" id="searchInput" placeholder="Search username">
-        <button onclick="searchUsers()">Search</button>
+        <div id="friendSearchContainer" style="display:none; padding: 20px;">
+            <input type="text" id="friendsearchInput" class="friendSearch" placeholder="Search friends">
+            <!--<button onclick="searchFriends()">Search</button>-->
+        </div>
 
-        <div id="results"></div>
         <div id="friendsContent" class="friends-content"></div>
+
+        <!-- MAIN PANEL 2 -->
+        <div id="chat" class="dm-chat">
+            <h2 id="chatHeader">Chat with </h2>
+            
+            <div id="chatMessages" class="chat-messages"></div>
+            
+            <div class="chat-input-container">
+                <input type="text" id="chatInput">
+                <!--<button id="sendBtn" onclick="sendMessage('${username}')">Send</button>-->
+            </div>
+        </div>
     </div>
 </div>
 
