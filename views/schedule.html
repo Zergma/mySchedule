@@ -14,18 +14,43 @@
 </div>
 </header>
 
-<h1>Create Event</h1>
+<div class="schedule-page">
 
-<form id="eventForm">
-    <input type="text" id="title" placeholder="Title" required>
-    <input type="datetime-local" id="start" required>
-    <input type="datetime-local" id="end" required>
-    <select id="visibility">
-        <option value="private">Private</option>
-        <option value="friends">Friends</option>
-    </select>
-    <button type="submit">Create</button>
-</form>
+    <div class="sidebar">
+        <div class="sidebar-top">
+            <div class="calendar-header"></div>
+            <button id="openModal" class="open-modal"><span class="plus">+</span> Create</button>
+        </div>
+    </div>
+
+    <div id="eventModal" class="modal-hidden hidden">
+        <div class="modal-content" id="modalContent">
+            <span id="closeModal" class="close-modal">&times;</span>
+            <h2>Create Event</h2>
+            
+            <input type="text" id="title" placeholder="Title" required>
+            <input type="datetime-local" id="start" required>
+            <input type="datetime-local" id="end" required>
+            <input type="color" id="color">
+
+            <select id="recurrence">
+                <option value="none">One-time</option>
+                <option value="weekly">Weekly</option>
+            </select>
+
+            <select id="visibility">
+                <option value="private">Private</option>
+                <option value="friends">Friends</option>
+            </select>
+
+            <button id="submitEvent">Create</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div id="calendar"></div>
+    </div>
+</div>
 
 <script src="js/schedule.js"></script>
 
