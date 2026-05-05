@@ -2,6 +2,12 @@ let currentDate = new Date();
 let currentView = "month";
 let events = [];
 
+const token = localStorage.getItem("token");
+
+if (!token) {
+    window.location.href = "/login.html";
+}
+
 // Load events from backend
 async function loadEvents() {
     const res = await fetch("/api/events");
