@@ -9,16 +9,16 @@ module.exports = (db) => {
 router.post("/request", requireAuthAPI, (req, res) => {
     const { userId } = req.body;
 
-    if (Number(userId) === req.session.userId) {
+    if (Number(userId) === req.user.id) {
         return res.status(400).json({ success: false, message: "Cannot add yourself as a friend" });
     }
 
     // Check if a friendship or a pending request already exists in either direction
     db.query(
         `SELECT * FROM friendships
-        WHERE (requester_id = ? AND addressee_id = ?)
-            OR (requester_id = ? AND addressee_id = ?)`,
-        [req.session.userId, userId, userId, req.session.userId],
+        WHERE (requester_id = $1 AND addressee_id = $2)
+            OR (requester_id = $2 AND addressee_id = $1)`,
+        [req.user.id, userId],
         (err, results) => {
             if (err) return res.status(500).json({ success: false, message: "Database error" });
 
@@ -28,8 +28,8 @@ router.post("/request", requireAuthAPI, (req, res) => {
 
             // Insert the new friend request
             db.query(
-                "INSERT INTO friendships (requester_id, addressee_id, status) VALUES (?, ?, 'pending')",
-                [req.session.userId, userId],
+                "INSERT INTO friendships (requester_id, addressee_id, status) VALUES ($1, $2, 'pending')",
+                [req.user.id, userId],
                 (err) => {
                     if (err) return res.status(400).json({ success: false, message: "Friend request already exists" });
                     res.json({ success: true });
@@ -40,43 +40,28 @@ router.post("/request", requireAuthAPI, (req, res) => {
 });
 
 // Get pending friend requests for current user
-router.post("/pending", requireAuthAPI, (req, res) => {
-    const userId = req.session.userId;
-    const receivedQuery = `
-        SELECT f.id AS requestId, u.id AS userId, u.username
-        FROM friendships f
-        JOIN users u ON f.requester_id = u.id
-        WHERE f.addressee_id = ? AND f.status = 'pending'
-    `;
+router.post("/pending", requireAuthAPI, async (req, res) => {
+    const userId = req.user.id;
 
-    const sentQuery = `
-        SELECT f.id AS requestId, u.id AS userId, u.username
-        FROM friendships f
-        JOIN users u ON f.addressee_id = u.id
-        WHERE f.requester_id = ? AND f.status = 'pending'
-    `;
+    try {
+        const receieved = await db.query(`
+            SELECT f.id AS requestId, u.id AS userId, u.username
+            FROM friendships f
+            JOIN users u ON f.requester_id = u.id
+            WHERE f.addressee_id = $1 AND f.status = 'pending'
+        `, [userId]);
 
-    db.query(receivedQuery, [userId], (err, received) => {
-        if (err) return res.status(500).json({ success: false });
+        const sent = await db.query(`
+            SELECT f.id AS requestId, u.id AS userId, u.username
+            FROM friendships f
+            JOIN users u ON f.addressee_id = u.id
+            WHERE f.requester_id = $1 AND f.status = 'pending'
+        `, [userId]);
+    } catch (err) {
+        res.status(500).json({ success: false });
+    }
 
-        db.query(sentQuery, [userId], (err, sent) => {
-            if (err) return res.status(500).json({ success: false });
-
-            res.json({ received, sent });
-        });
-    });
-    /*db.query(
-        `SELECT f.id AS requestId, u.id AS userId, u.username
-         FROM friendships f
-         JOIN users u
-         ON f.requester_id = u.id
-         WHERE f.addressee_id = ? AND f.status = 'pending'`,
-        [req.session.userId],
-        (err, results) => {
-            if (err) return res.status(500).json({ success: false, message: "DB error" });
-            res.json(results); // returns array of pending requests
-        }
-    );*/
+    res.json({ received: received.rows, sent: sent.rows });
 });
 
 // Accept a friend request
@@ -84,8 +69,8 @@ router.post("/accept", requireAuthAPI, (req, res) => {
     const { requestId } = req.body;
 
     db.query(
-        "UPDATE friendships SET status='accepted' WHERE id=? AND addressee_id=?",
-        [requestId, req.session.userId],
+        "UPDATE friendships SET status = 'accepted' WHERE id = $1 AND addressee_id = $2",
+        [requestId, req.user.id],
         (err) => {
             if (err) return res.status(500).json({ success: false, message: "Failed to accept friend request" });
             res.json({ success: true });
@@ -98,8 +83,8 @@ router.post("/decline", requireAuthAPI, (req, res) => {
     const { requestId } = req.body;
 
     db.query(
-        "DELETE FROM friendships WHERE id=? AND addressee_id=?",
-        [requestId, req.session.userId],
+        "DELETE FROM friendships WHERE id = $1 AND addressee_id = $2",
+        [requestId, req.user.id],
         (err) => {
             if (err) return res.status(500).json({ success: false, message: "Failed to decline friend request" });
             res.json({ success: true });
@@ -108,24 +93,24 @@ router.post("/decline", requireAuthAPI, (req, res) => {
 });
 
 // GET /api/friends --> list accepted friends of current user
-router.get("/", requireAuthAPI, (req, res) => {
-    db.query(
-        `SELECT u.id, u.username
-        FROM friendships f
-        JOIN users u
-        ON (u.id = f.requester_id OR u.id = f.addressee_id)
-        WHERE (f.requester_id = ? OR f.addressee_id = ?)
-        AND f.status = 'accepted'
-        AND u.id != ?`,
-        [req.session.userId, req.session.userId, req.session.userId],
-        (err, results) => {
-            if (err) {
-                console.error("DB ERROR:", err);
-                return res.status(500).json({ success: false, error: err.message });
-            }
-            res.json(results);
-        }
-    );
+router.get("/", requireAuthAPI, async (req, res) => {
+    try {
+        const result = await db.query(
+            `SELECT u.id, u.username
+            FROM friendships f
+            JOIN users u
+            ON (u.id = f.requester_id OR u.id = f.addressee_id)
+            WHERE (f.requester_id = $1 OR f.addressee_id = $2)
+            AND f.status = 'accepted'
+            AND u.id != $1`,
+            [req.user.id, req.user.id],
+        );
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("DB ERROR:", err);
+        res.status(500).json({ success: false });
+    }
 });
 
 // Search users by username
@@ -133,8 +118,8 @@ router.get("/search", requireAuthAPI, (req, res) => {
     const { username } = req.query;
 
     db.query(
-        "SELECT id, username FROM users WHERE username LIKE ? and id != ?",
-        [`%${username}%`, req.session.userId],
+        "SELECT id, username FROM users WHERE username LIKE $1 and id != $2",
+        [`%${username}%`, req.user.id],
         (err, results) => {
             if (err) return res.status(500).json({ success: false });
             res.json(results);
@@ -149,11 +134,11 @@ router.get("/online", requireAuthAPI, (req, res) => {
         FROM friendships f
         JOIN users u
             on (u.id = f.requester_id OR u.id = f.addressee_id)
-        WHERE (f.requester_id = ? OR f.addressee_id = ?)
+        WHERE (f.requester_id = $1 OR f.addressee_id = $2)
             AND f.status = 'accepted'
-            AND u.id != ?
-            AND u.last_active >= NOW() - INTERVAL 2 MINUTE`,
-        [req.session.userId, req.session.userId, req.session.userId],
+            AND u.id != $1
+            AND u.last_active >= NOW() - INTERVAL '2 minutes'`,
+        [req.user.id, req.user.id, req.user.id],
         (err, results) => {
             if (err) return res.status(500).json({ success: false });
             res.json(results);
@@ -163,8 +148,8 @@ router.get("/online", requireAuthAPI, (req, res) => {
 
 router.get("/ping", requireAuthAPI, (req, res) => {
     db.query(
-        "UPDATE users SET last_active = NOW() WHERE id = ?",
-        [req.session.userId],
+        "UPDATE users SET last_active = NOW() WHERE id = $1",
+        [req.user.id],
         (err) => {
             if (err) return res.status(500).json({ success: false });
             res.json({ success: true });
